@@ -17,6 +17,27 @@ export interface ScoreBlock {
   [key: string]: unknown; // zone/components (altman), max/signals (piotroski), flag/threshold/indices (beneish)
 }
 
+/**
+ * Merton distance-to-default: the market-implied, dynamic default signal.
+ * `value` is the 1-year risk-neutral probability of default (0-1); `dd` is the
+ * distance to default in standard deviations. N/A (applicable=false, with a note)
+ * whenever a market input is missing - no live price history, no market cap, or
+ * no reported debt.
+ */
+export type MertonLabel = "Remote" | "Low" | "Elevated" | "High" | "Severe" | null;
+
+export interface MertonBlock extends ScoreBlock {
+  dd: number | null;
+  label: MertonLabel;
+  asset_vol: number | null;
+  equity_vol: number | null;
+  leverage: number | null;
+  face_debt: number | null;
+  risk_free: number | null;
+  horizon_years: number | null;
+  components: Record<string, number>;
+}
+
 export interface BenchmarkMetric {
   value: number | null;
   median: number | null;
@@ -52,6 +73,7 @@ export interface Report {
     altman: ScoreBlock & { zone: Zone; components: Record<string, number> };
     piotroski: ScoreBlock & { max: number; signals: Record<string, number> };
     beneish: ScoreBlock & { flag: boolean; threshold: number; indices: Record<string, number> };
+    merton: MertonBlock;
   };
   benchmark: {
     sector: string | null;
@@ -61,6 +83,7 @@ export interface Report {
   provenance: {
     fundamentals: ProvenanceSource;
     price: ProvenanceSource;
+    equity_volatility?: ProvenanceSource & { window?: string | null };
     peers: { source: string };
   };
   periods: { current: string | null; prior: string | null };
